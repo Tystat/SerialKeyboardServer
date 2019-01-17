@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Laszlo Papp <lpapp@kde.org>
+** Copyright (C) 2012 Denis Shienkov <denis.shienkov@gmail.com>
+** Copyright (C) 2012 Laszlo Papp <lpapp@kde.org>
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the QtSerialPort module of the Qt Toolkit.
@@ -48,35 +49,63 @@
 **
 ****************************************************************************/
 
-#ifndef SERIALPORTREADER_H
-#define SERIALPORTREADER_H
+#include "console.h"
 
-#include <QByteArray>
-#include <QSerialPort>
-#include <QTextStream>
-#include <QTimer>
+#include <QScrollBar>
 
-QT_BEGIN_NAMESPACE
-
-QT_END_NAMESPACE
-
-class SerialPortReader : public QObject
+Console::Console(QWidget *parent) :
+    QPlainTextEdit(parent)
 {
-    Q_OBJECT
+    document()->setMaximumBlockCount(100);
+    QPalette p = palette();
+    p.setColor(QPalette::Base, Qt::black);
+    p.setColor(QPalette::Text, Qt::green);
+    setPalette(p);
+}
 
-public:
-    explicit SerialPortReader(QSerialPort *serialPort, QObject *parent = nullptr);
+void Console::putData(const QByteArray &data)
+{
+    insertPlainText(data);
 
-private slots:
-    void handleReadyRead();
-    void handleTimeout();
-    void handleError(QSerialPort::SerialPortError error);
+    QScrollBar *bar = verticalScrollBar();
+    bar->setStyleSheet("QScrollBar {width:0px;}");
+    bar->setValue(bar->maximum());
+}
 
-private:
-    QSerialPort *m_serialPort = nullptr;
-    QByteArray m_readData;
-    QTextStream m_standardOutput;
-    QTimer m_timer;
-};
+void Console::setLocalEchoEnabled(bool set)
+{
+    m_localEchoEnabled = set;
+}
 
-#endif // SERIALPORTREADER_H
+void Console::keyPressEvent(QKeyEvent *e)
+{
+    switch (e->key()) {
+    case Qt::Key_Backspace:
+    case Qt::Key_Left:
+    case Qt::Key_Right:
+    case Qt::Key_Up:
+    case Qt::Key_Down:
+        break;
+    default:
+        if (m_localEchoEnabled)
+            QPlainTextEdit::keyPressEvent(e);
+        emit getData(e->text().toLocal8Bit());
+    }
+}
+
+
+void Console::mousePressEvent(QMouseEvent *e)
+{
+    Q_UNUSED(e)
+    setFocus();
+}
+
+void Console::mouseDoubleClickEvent(QMouseEvent *e)
+{
+    Q_UNUSED(e)
+}
+
+void Console::contextMenuEvent(QContextMenuEvent *e)
+{
+    Q_UNUSED(e)
+}

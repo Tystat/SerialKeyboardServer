@@ -1,6 +1,7 @@
 /****************************************************************************
 **
-** Copyright (C) 2013 Laszlo Papp <lpapp@kde.org>
+** Copyright (C) 2012 Denis Shienkov <denis.shienkov@gmail.com>
+** Copyright (C) 2012 Laszlo Papp <lpapp@kde.org>
 ** Contact: https://www.qt.io/licensing/
 **
 ** This file is part of the QtSerialPort module of the Qt Toolkit.
@@ -48,55 +49,32 @@
 **
 ****************************************************************************/
 
-#include "serialportreader.h"
+#ifndef CONSOLE_H
+#define CONSOLE_H
 
-#include <QCoreApplication>
+#include <QPlainTextEdit>
 
-SerialPortReader::SerialPortReader(QSerialPort *serialPort, QObject *parent) :
-    QObject(parent),
-    m_serialPort(serialPort),
-    m_standardOutput(stdout)
+class Console : public QPlainTextEdit
 {
-    connect(m_serialPort, &QSerialPort::readyRead, this, &SerialPortReader::handleReadyRead);
-    connect(m_serialPort, &QSerialPort::errorOccurred, this, &SerialPortReader::handleError);
-    connect(&m_timer, &QTimer::timeout, this, &SerialPortReader::handleTimeout);
+    Q_OBJECT
 
-    m_timer.start(20);
-}
+signals:
+    void getData(const QByteArray &data);
 
-void SerialPortReader::handleReadyRead()
-{
-    m_readData.append(m_serialPort->readAll());
+public:
+    explicit Console(QWidget *parent = nullptr);
 
-    if (!m_timer.isActive())
-        m_timer.start(20);
-}
+    void putData(const QByteArray &data);
+    void setLocalEchoEnabled(bool set);
 
-void SerialPortReader::handleTimeout()
-{
-    if (m_readData.isEmpty()) {
-        m_standardOutput << QObject::tr("No data was currently available "
-                                        "for reading from port %1")
-                            .arg(m_serialPort->portName())
-                         << endl;
-    } else {
-        m_standardOutput << QObject::tr("Data successfully received from port %1")
-                            .arg(m_serialPort->portName())
-                         << endl;
-        m_standardOutput << m_readData << endl;
-    }
+protected:
+    void keyPressEvent(QKeyEvent *e) override;
+    void mousePressEvent(QMouseEvent *e) override;
+    void mouseDoubleClickEvent(QMouseEvent *e) override;
+    void contextMenuEvent(QContextMenuEvent *e) override;
 
-    //QCoreApplication::quit();
-}
+private:
+    bool m_localEchoEnabled = false;
+};
 
-void SerialPortReader::handleError(QSerialPort::SerialPortError serialPortError)
-{
-    if (serialPortError == QSerialPort::ReadError) {
-        m_standardOutput << QObject::tr("An I/O error occurred while reading "
-                                        "the data from port %1, error: %2")
-                            .arg(m_serialPort->portName())
-                            .arg(m_serialPort->errorString())
-                         << endl;
-        QCoreApplication::exit(1);
-    }
-}
+#endif // CONSOLE_H
