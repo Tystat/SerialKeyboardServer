@@ -51,10 +51,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_ServerStartButton_clicked()
 {
-    serial->setPortName(this->ui->PortInput->text());
     serial->setBaudRate(QSerialPort::Baud9600);
     if (this->ui->PortInput->text().toLatin1()!="")
     {
+        serial->setPortName(this->ui->PortInput->text());
         if (!serial->open(QIODevice::ReadOnly)) //If connection to device failed
         {
             console->putData("Failed to open port ");
@@ -69,8 +69,24 @@ void MainWindow::on_ServerStartButton_clicked()
             ui->labelServerStatus->setText("Server status : running");
         }
     }
-    else
-        console->putData("No COM port set !\n");
+    else //If no port specified then try to find it
+    {
+        console->putData("No COM port set, scanning for devices\n");
+        for(int i=2;i<=99;i++) //Scan of port 2 to 99 (port 1 always connected on windows)
+        {
+            serial->setPortName(QString::fromStdString("COM"+std::to_string(i)));
+            if (!serial->open(QIODevice::ReadOnly)) //If the port isn't available
+                console->putData(QByteArray::fromStdString("COM"+std::to_string(i)+" : No device found\n"));
+            else //If the connection is successful
+            {
+                console->putData(QByteArray::fromStdString("Device found on port "+std::to_string(i)+"\n"));
+                console->putData(QByteArray::fromStdString("Port "+std::to_string(i)+"@9600 bauds successfully openned\n"));
+                ui->labelServerStatus->setText("Server status : running");
+                break;
+            }
+        }
+
+    }
     connect(serial, SIGNAL(readyRead()), this, SLOT(on_Serial_Data_Received()));
     seq1 = ui->ShortCut1->keySequence();
     seq2 = ui->ShortCut2->keySequence();

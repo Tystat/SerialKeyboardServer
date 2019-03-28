@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>493</width>
-    <height>419</height>
+    <width>496</width>
+    <height>442</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -430,8 +430,8 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>493</width>
-     <height>21</height>
+     <width>496</width>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_Filz">
